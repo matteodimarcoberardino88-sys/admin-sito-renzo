@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Prenotazioni Ristorante Perino</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        .admin-container { max-width: 1000px; margin: 100px auto; padding: 2rem; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 2rem; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: var(--primary); color: white; }
+        .btn-delete { background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-delete:hover { background: #b91c1c; }
+        .no-data { text-align: center; padding: 2rem; color: #666; }
+    </style>
+</head>
+<body style="background: var(--light);">
+
+    <header>
+        <div class="logo">Area Admin - <span>Ristorante Perino</span></div>
+        <nav>
+            <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Torna al Sito</a>
+        </nav>
+    </header>
+
+    <div class="admin-container">
+        <h2>Gestione Tavoli in Tempo Reale</h2>
+        <p class="section-subtitle">Qui compaiono istantaneamente le prenotazioni fatte da qualsiasi dispositivo.</p>
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefono</th>
+                        <th>Persone</th>
+                        <th>Data</th>
+                        <th>Orario</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-table-body">
+                    <tr><td colspan="6" class="no-data">Caricamento prenotazioni...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKibMXl9x4pC-dYY-HqVE7HDRPqLWx6HI",
+            authDomain: "sito-renzo.firebaseapp.com",
+            projectId: "sito-renzo",
+            storageBucket: "sito-renzo.firebasestorage.app",
+            messagingSenderId: "389103738199",
+            appId: "1:389103738199:web:9f3070e5f90d7a46d37212",
+            measurementId: "G-XZKJ70B9RM"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Sincronizzazione in tempo reale con Firestore
+        function loadBookingsRealtime() {
+            const tbody = document.getElementById('admin-table-body');
+
+            db.collection("prenotazioni").onSnapshot((snapshot) => {
+                tbody.innerHTML = '';
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="no-data">Nessuna prenotazione trovata.</td></tr>`;
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const b = doc.data();
+                    const docId = doc.id;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${b.name}</strong><br><small>${b.email}</small></td>
+                        <td>${b.phone}</td>
+                        <td>${b.guests}</td>
+                        <td>${b.date}</td>
+                        <td>${b.time}</td>
+                        <td><button class="btn-delete" onclick="deleteBooking('${docId}')">Elimina</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        async function deleteBooking(docId) {
+            if (confirm("Vuoi davvero eliminare questa prenotazione?")) {
+                try {
+                    await db.collection("prenotazioni").doc(docId).delete();
+                } catch (error) {
+                    console.error("Errore durante l'eliminazione: ", error);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadBookingsRealtime);
+    </script>
+</body>
+</html>
